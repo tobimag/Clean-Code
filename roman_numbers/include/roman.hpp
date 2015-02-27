@@ -9,14 +9,11 @@ class Roman {
 	Roman(const std::string&);	
 	Roman(const Roman&);	
 	Roman& operator=(const Roman&);
-	
-	protected:
-	std::string GetSymbols();	
+	operator std::string();
 	
 	private:
 	std::string _symbols;
 	
-	swap(const Roman&);
 	
 };
 

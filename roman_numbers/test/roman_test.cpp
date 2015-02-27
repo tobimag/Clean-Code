@@ -5,17 +5,18 @@
 
 TEST(RomanTest, DefaultConstructor) {
 	Roman roman;
-	EXPECT_EQ(roman.GetSymbols(), "");	
+	EXPECT_EQ("", (std::string)roman);
 }
 
 TEST(RomanTest, StringArgumentConstructor) {
 	std::string romanSymbols = "XVI";
 	Roman roman(romanSymbols);
-	EXPECT_EQ(roman.GetSymbols(), romanSymbols);
+	EXPECT_EQ(romanSymbols, (std::string)roman);
 }
 
 TEST(RomanTest, CopyConstructor) {
 	Roman roman1("XVI");
 	Roman roman2(roman1);
-	EXPECT_EQ(roman1.GetSymbols(), roman2.GetSymbols());
+	EXPECT_EQ((std::string) roman1, (std::string)roman2);
+
 }

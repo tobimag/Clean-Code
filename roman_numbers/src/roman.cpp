@@ -17,6 +17,6 @@ Roman& Roman::operator=(const Roman& rhs) {
 	return *this;
 }
 
-std::string Roman::GetSymbols() {
+Roman::operator std::string() {
 	return _symbols;
 }
