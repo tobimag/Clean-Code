@@ -1,12 +1,12 @@
-#include "roman_number_table.h"
+#include "roman_number_table.hpp"
 
 RomanNumberTable::RomanNumberTable()
   : symbolNumberTable() {
-	fillTable();	
+	fillTable();
 	}
 
 void RomanNumberTable::fillTable() {
-	symbolNumberTable = {std::make_pair('I',1), 
+	symbolNumberTable = {std::make_pair('I',1),
 						 std::make_pair('V',5),
 						 std::make_pair('X',10),
 						 std::make_pair('L',50),
@@ -15,7 +15,7 @@ void RomanNumberTable::fillTable() {
 						 std::make_pair('M',1000)};
 }
 
-int RomanNumberTable::GetValueFromSymbol(char romanNumber) {
+unsigned int RomanNumberTable::GetValueFromSymbol(char romanNumber) {
 	for(SymbolNumberTable::const_iterator it = symbolNumberTable.begin(); 
 		it != symbolNumberTable.end(); ++it) {
 		if(it->first == romanNumber) {
@@ -23,4 +23,4 @@ int RomanNumberTable::GetValueFromSymbol(char romanNumber) {
 		}
 	}
 	return 0;
-} 
+}

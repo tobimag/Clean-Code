@@ -1,6 +1,6 @@
 CC := g++
 CXXFLAGS := -std=c++11 -c 
-LIB := -lgtest -lpthread
+LIBS := -lgtest -lpthread
 
 # Directories
 BUILD := build
@@ -9,31 +9,50 @@ INCLUDE := -I include
 SOURCE := src
 TEST := test
 
-#Files
+# Source files
 SOURCES := $(shell find $(SOURCE) -name '*.cpp')
-SOURCE_OBJECTS := $(patsubst $(SOURCE)/%,$(BUILD)/%,$(SOURCES:.cpp=.o))
 TESTS := $(shell find $(TEST) -name '*.cpp')
+
+# Object files
+SOURCE_OBJECTS := $(patsubst $(SOURCE)/%,$(BUILD)/%,$(SOURCES:.cpp=.o))
 TEST_OBJECTS := $(patsubst $(TEST)/%,$(BUILD)/%,$(TESTS:.cpp=.o))
 
-release: $(SOURCE_OBJECTS)
+# Binary files
+TEST_BINARY := roman_numbers_test
+RELEASE_BINARY := roman_numbers
+
+# Targets
+TEST_TARGET := test
+RELEASE_TARGET := release
+
+# Rule definitions
+LINK_RULE = $(CC) -o $(BIN)/$(BINARY) $^ $(LIBS)
+COMPILE_RULE = $(CC) $(CXXFLAGS) $(INCLUDE) $< -o $@
+
+$(RELEASE_TARGET): $(SOURCE_OBJECTS)
+	$(eval BINARY := $(RELEASE_BINARY))
 	@echo "Linking $^..."
 	@mkdir -p bin
-	$(CC) -o $(BIN)/roman_numbers $^ $(LIB)
+	$(LINK_RULE)
 
-test: $(TEST_OBJECTS) $(SOURCE_OBJECTS)
+$(TEST_TARGET): $(TEST_OBJECTS) $(SOURCE_OBJECTS)
+	$(eval BINARY := $(TEST_BINARY))
 	@echo "Linking $^..."
 	@mkdir -p bin
-	$(CC) -o $(BIN)/roman_numbers_test $^ $(LIB)
-
+	$(LINK_RULE)
+	
+test-and-run: $(TEST_TARGET)
+	$(BIN)/$(TEST_BINARY)
+	
 $(BUILD)/%.o: $(SOURCE)/%.cpp
 	@echo "Compiling $<..."
 	@mkdir -p build
-	$(CC) $(CXXFLAGS) $(INCLUDE) $< -o $@
+	$(COMPILE_RULE)
 
 $(BUILD)/%.o: $(TEST)/%.cpp
 	@echo "Compiling $<..."
 	@mkdir -p build
-	$(CC) $(CXXFLAGS) $(INCLUDE) $< -o $@
+	$(COMPILE_RULE)
 	
 clean:
 	@echo "Removing binaries..."

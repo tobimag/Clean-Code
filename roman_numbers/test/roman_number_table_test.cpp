@@ -1,5 +1,6 @@
+#include "../include/roman_number_table.hpp"
+
 #include <gtest/gtest.h>
-#include "roman_number_table.h"
 
 TEST(RomanNumberTableTest, GetAllValues) {
 
