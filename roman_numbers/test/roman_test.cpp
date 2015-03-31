@@ -19,21 +19,15 @@ TEST(RomanTest, CopyConstructor) {
 	EXPECT_EQ(roman1, roman2);
 }
 
-TEST(RomanTest, SingelRoman) {
+TEST(RomanTest, EqualToInteger) {
 	Roman five = "V";
 	EXPECT_EQ(5, five);
-}
-
-TEST(RomanTest, AdditonsOnly) {
 	Roman eleven = "XI";
 	Roman oneThousandSixhundredSixtySix = "MDCLXVI";
 	Roman twenty = "XX";
 	EXPECT_EQ(11, eleven);
 	EXPECT_EQ(1666, oneThousandSixhundredSixtySix);
 	EXPECT_EQ(20, twenty);
-}
-
-TEST(RomanTest, SubtractiveOrder) {
 	Roman four = "IV";
 	Roman eight = "IIX";
 	Roman oneThousandFourHundredForityFour = "MCDXLIV";
@@ -42,4 +36,19 @@ TEST(RomanTest, SubtractiveOrder) {
 	EXPECT_EQ(8, eight);
 	EXPECT_EQ(1444 , oneThousandFourHundredForityFour);
 	EXPECT_EQ(800, eightHundred);
+}
+
+TEST(RomanTest, BiggerAndSmallerThanInteger) {
+	Roman six = "VI";
+	EXPECT_GT(six, 5);
+	EXPECT_GT(7, six);
+	EXPECT_LT(six, 7);
+	EXPECT_LT(5, six);
+}
+
+TEST(RomanTest, RelationalOperators) {
+	Roman bigger = "XV";
+	Roman smaller = "IV";
+	EXPECT_GT(bigger, smaller);
+	EXPECT_LT(smaller, bigger);
 }

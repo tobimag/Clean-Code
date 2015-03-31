@@ -15,8 +15,14 @@ class Roman {
 
 	bool operator==(const Roman&) const;
 	bool operator!=(const Roman&) const;
+	bool operator>(const Roman&) const;
+	bool operator<(const Roman&) const;
 
 	bool operator==(unsigned int) const;
+	bool operator!=(unsigned int) const;
+	bool operator>(unsigned int) const;
+	bool operator<(unsigned int) const;
+
 
 	private:
 	std::string _symbols;
@@ -33,9 +39,10 @@ bool operator==(const std::string&, const Roman&);
 bool operator!=(const Roman&, const std::string&);
 bool operator!=(const std::string&, const Roman&);
 
-// Arithmetic operators
-bool operator==(const Roman&, unsigned int);
+// Integer relation operators
 bool operator==(unsigned int, const Roman&);
+bool operator>(unsigned int, const Roman&);
+bool operator<(unsigned int, const Roman&);
 
 #endif
 

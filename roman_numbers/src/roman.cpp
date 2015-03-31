@@ -1,6 +1,6 @@
 #include "roman.hpp"
 
-#include "../include/roman_number_table.hpp"
+#include "roman_number_table.hpp"
 
 Roman::Roman() {
 	_symbols = "";
@@ -38,8 +38,27 @@ bool Roman::operator!=(const Roman& rhs) const {
 	return _symbols != rhs._symbols;
 }
 
-bool Roman::operator==(unsigned int Integer) const {
-	return toArabic() == Integer;
+bool Roman::operator==(unsigned int rhs) const {
+	return toArabic() == rhs;
+}
+
+bool Roman::operator!=(unsigned int rhs) const {
+	return toArabic() != rhs;
+}
+
+bool Roman::operator>(unsigned int rhs) const {
+	return toArabic() > rhs;
+}
+
+bool Roman::operator<(unsigned int rhs) const {
+	return toArabic() < rhs;
+}
+
+bool Roman::operator>(const Roman& rhs) const {
+	return toArabic() > rhs;
+}
+bool Roman::operator<(const Roman& rhs) const {
+	return toArabic() < rhs;
 }
 
 unsigned int Roman::toArabic() const {
@@ -47,21 +66,20 @@ unsigned int Roman::toArabic() const {
 }
 
 unsigned int Roman::toArabicHelper(const std::string& romanNumber) const {
-	const char thisSymbol = romanNumber.front();
+	const char firstSymbol = romanNumber.front();
 	const std::string tail = romanNumber.substr(1);
 	if(tail.empty()) {
-		return toArabicHelper(thisSymbol);
+		return toArabicHelper(firstSymbol);
 	}
 	unsigned int subStringLength = 0;
 	for(char symbol : tail) {
 		++subStringLength;
-		if(toArabicHelper(symbol) > toArabicHelper(thisSymbol)) {
+		if(toArabicHelper(firstSymbol) < toArabicHelper(symbol)) {
 			return -toArabicHelper(romanNumber.substr(0, subStringLength)) +
 					toArabicHelper(romanNumber.substr(subStringLength));
 		}
-
 	}
-	return toArabicHelper(thisSymbol) + toArabicHelper(tail);
+	return toArabicHelper(firstSymbol) + toArabicHelper(tail);
 }
 
 unsigned int Roman::toArabicHelper(const char romanSymbol) const {
@@ -85,11 +103,14 @@ bool operator!=(const std::string& lhs, const Roman& rhs) {
 	return Roman(lhs) != rhs;
 }
 
-bool operator==(const Roman& lhs, unsigned int rhs) {
-	return lhs.operator==(rhs);
-}
-
 bool operator==(unsigned int lhs, const Roman& rhs) {
 	return rhs.operator==(lhs);
 }
 
+bool operator>(unsigned int lhs, const Roman& rhs) {
+	return rhs.operator<(lhs);
+}
+
+bool operator<(unsigned int lhs, const Roman& rhs) {
+	return !rhs.operator<(lhs);
+}
