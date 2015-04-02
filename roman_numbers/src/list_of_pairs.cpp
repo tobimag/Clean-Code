@@ -1,11 +1,11 @@
 #include "list_of_pairs.hpp"
 
-ListOfPairs::ListOfPairs() {
-	// TODO Auto-generated constructor stub
+template <typename T1, typename T2>
+ListOfPairs<T1, T2>::ListOfPairs() :
+_listOfPairs() {
 
 }
-
-ListOfPairs::~ListOfPairs() {
-	// TODO Auto-generated destructor stub
+template <typename T1, typename T2>
+ListOfPairs<T1, T2>::~ListOfPairs() {
 }
 
