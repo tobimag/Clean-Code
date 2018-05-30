@@ -1,193 +1,236 @@
 #include <iostream>
 #include <stdlib.h> 
 #include <vector>
-#include <map>
 #include <algorithm>
 #include <limits>
+#include <queue>
 
-#include <iterator>
-
-/*
- * 1 1 1 1 0 1 0 1 0 1 1 1
- *
- * 1 1 1 1
- * 0 1 0 1
- * 0 1 1 1
- *
- *
- * 0,0 => 0  1,0 => 1  2,0 => 2  3,0 => 3
- * 0,1 => 4  1,1 => 5  2,1 => 6  3,1 => 7
- * 0,2 => 8  1,2 => 9  2,2 => 10 3,2 => 11
- *
- * 0  1  2  3
- * 4  5  6  7
- * 8  9  10 11
- *
- */
-
-
-int xy2MapIndex(const int nX, const int nY, const int nMapWidth)
+class Node
 {
-   return nMapWidth * nY + nX;
-}
+   public:
+      Node(int x, int y)
+         : x(x),
+           y(y),
+           distanceFromStart(std::numeric_limits<int>::max()),
+           priority(std::numeric_limits<int>::max()),
+           previousNodeXY(std::make_pair<int, int>(-1,-1))
+      {}
 
-std::pair<int, int> MapIndexToXY(const int mapIndex, const int nMapWidth)
-{
-   return std::make_pair(mapIndex / nMapWidth, mapIndex % nMapWidth);
-}
+      Node& operator=(const Node& rhs) = default;
 
-int HeuristicCostEstimate(const int startIndex, const int goalIndex, const int nMapWidth)
-{
-   const auto startPoint = MapIndexToXY(startIndex, nMapWidth);
-   const auto endPoint = MapIndexToXY(goalIndex, nMapWidth);
-
-   return abs(endPoint.first - startPoint.first) + abs(endPoint.second - startPoint.second);
-}
-
-std::vector<int> getNeighbours(const int index, const unsigned char* pMap, const int nMapWidth, const int nMapHeight)
-{
-   std::vector<int> neighbours;
-   
-   const int aboveNeighbour = index - nMapWidth;
-   // operator && evaluate left operand first and if the value is false it avoids evaluating right operand
-   if (aboveNeighbour > 0 && pMap[aboveNeighbour])
+   int getPriority() const
    {
-      neighbours.push_back(aboveNeighbour);
+      return priority;
    }
 
-   const int rightNeighbour = index + 1;
-   if (rightNeighbour % nMapWidth != 0 && pMap[rightNeighbour])
+   int getDistanceFromStart() const
    {
-      neighbours.push_back(rightNeighbour);
+      return distanceFromStart;
    }
 
-   const int belowNeighbour = index + nMapWidth;
-   if (belowNeighbour < nMapWidth * nMapHeight && pMap[belowNeighbour])
+   int getX() const
    {
-      neighbours.push_back(belowNeighbour);
+      return x;
    }
 
-   const int leftNeighbour = index - 1;
-   if ((leftNeighbour + 1) % nMapWidth != 0 && pMap[leftNeighbour])
+   int getY() const
    {
-      neighbours.push_back(leftNeighbour);
+      return y;
    }
 
-   return neighbours;
-}
+   const std::pair<int, int> getPreviousNodeXY() const
+   {
+      return previousNodeXY;
+   }
 
-int reconstructPath(const std::map<int, int> &cameFrom, int current)
+   void updateDistanceFromStart(const int newDistanceFromStart)
+   {
+      distanceFromStart = newDistanceFromStart;
+   }
+
+   void updatePriority(const int newPriority)
+   {
+      priority = newPriority;
+   }
+
+   void setPreviousNodeXY(const Node& node)
+   {
+      previousNodeXY = std::make_pair<int, int>(node.getX(), node.getY());
+   }
+
+   private:
+
+      int x;
+      int y;
+      int distanceFromStart;
+      int priority;
+      std::pair<int, int> previousNodeXY;
+};
+
+
+bool operator<(const Node &lhs, const Node &rhs)
 {
-   auto it = cameFrom.find(current);
-   while(it != cameFrom.end())
-   {
-      std::cout << it->first << "-";
-      it = cameFrom.find(it->second);
-   }
-
-   return 0;
+   return lhs.getPriority() > rhs.getPriority();
 }
+
+bool operator==(const Node &lhs, const Node &rhs)
+{
+   return lhs.getX() == rhs.getX() && lhs.getY() == rhs.getY();
+}
+
+bool operator==(const Node &lhs, const std::pair<int, int> rhs)
+{
+   return lhs.getX() == rhs.first && lhs.getY() == rhs.second;
+}
+
+std::ostream& operator<<(std::ostream& os, const Node& node)
+{
+   os << "(" << node.getX() << "," << node.getY() << ")";
+   return os;
+}
+
+class Map
+{
+   public:
+      Map(int aWidth, int aHeight, const unsigned char* aMap)
+         : width(aWidth), height(aHeight), theMap(aMap)
+         {}
+      
+      int heuristicCostEstimate(const Node& node, const Node& target)
+      {
+         return abs(node.getX() - target.getX()) + abs(node.getY() - target.getY());
+      }
+
+      int reconstructPath(const Node& node, const std::vector<Node>& visitedNodes, int* pOutBuffer, const int nOutBufferSize)
+      {
+         std::vector<int> path;
+         path.reserve(width*height);
+         path.push_back(xy2MapIndex(node.getX(), node.getY()));
+         auto current = std::find(visitedNodes.begin(), visitedNodes.end(), node.getPreviousNodeXY());
+         while(current != visitedNodes.end())
+         {
+            path.push_back(xy2MapIndex(current->getX(), current->getY()));
+            current = std::find(visitedNodes.begin(), visitedNodes.end(), current->getPreviousNodeXY());
+         }
+         path.pop_back();
+         
+         if(path.size() > nOutBufferSize)
+         {   
+            return -1;
+         }
+
+         std::reverse_copy(path.begin(), path.end(), pOutBuffer);
+         return path.size();
+      }
+
+      std::vector<Node> getNeighbours(const Node& node)
+      {
+         
+         std::vector<Node> neighbours;
+
+         Node neighbourAbove = Node(node.getX(), node.getY() - 1);
+         if (nodeIsValid(neighbourAbove))
+         {
+            neighbours.push_back(neighbourAbove);
+         }
+
+         Node rightNeighbour = Node(node.getX() + 1, node.getY()); 
+         if (nodeIsValid(rightNeighbour))
+         {
+            neighbours.push_back(rightNeighbour);
+         }
+
+         Node neighbourBelow = Node(node.getX(), node.getY() + 1);
+         if (nodeIsValid(neighbourBelow))
+         {
+            neighbours.push_back(neighbourBelow);
+         }
+
+         Node leftNeighbour = Node(node.getX() - 1, node.getY());
+         if (nodeIsValid(leftNeighbour))
+         {
+            neighbours.push_back(leftNeighbour);
+         }
+
+         return neighbours;
+      }
+
+   private:
+
+      bool nodeIsValid(const Node& node)
+      {
+         const int x = node.getX();
+         const int y = node.getY();
+      
+         return x >= 0 && x < width && y >= 0 && y < height && theMap[xy2MapIndex(x, y)];
+      }
+
+      int xy2MapIndex(const int x, const int y)
+      {
+         return width * y + x;
+      }
+
+      int width;
+      int height;
+      const unsigned char* theMap;
+};
+
+
 
 int FindPath(const int nStartX, const int nStartY,
              const int nTargetX, const int nTargetY, 
              const unsigned char* pMap, const int nMapWidth, const int nMapHeight,
              int* pOutBuffer, const int nOutBufferSize) 
 {
-   const int startIndex = xy2MapIndex(nStartX, nStartY, nMapWidth);
-   const int goalIndex = xy2MapIndex(nTargetX, nTargetY, nMapWidth);
-
-   std::vector<int> mapIndicies(nMapWidth * nMapHeight);
-   std::iota(std::begin(mapIndicies), std::end(mapIndicies), 0);
-
-   std::vector<int> closedSet;
-   std::vector<int> openSet = {startIndex};
+   Map theMap = Map(nMapWidth, nMapHeight, pMap);
    
-   std::map<int, int> cameFrom;
-   
-   std::map<int, int> gScore;
-   for (auto index : mapIndicies)
-   {
-      gScore.emplace(index, std::numeric_limits<int>::max());
-   }
-   gScore[startIndex] = 0;
+   Node start(nStartX, nStartY);
+   Node target(nTargetX, nTargetY);
 
-   std::map<int, int> fScore;
-   for (auto index : mapIndicies)
-   {
-      fScore.emplace(index, std::numeric_limits<int>::max());
-   }
-   fScore[startIndex] = HeuristicCostEstimate(startIndex, goalIndex, nMapWidth);
+   std::priority_queue<Node> nodesToVisit;
+   nodesToVisit.push(start);
+  
+   std::vector<Node> visitedNodes;
+   visitedNodes.reserve(nMapWidth*nMapHeight);
 
-   while (!openSet.empty())
+   while(!nodesToVisit.empty())
    {
-      std::vector<std::pair<int, int>> openSetFScore;
-      std::copy_if(std::begin(fScore), std::end(fScore), std::back_inserter(openSetFScore),
-            [&openSet](auto i){return std::find(std::begin(openSet), std::end(openSet), i.first) != std::end(openSet);});
-     
-      
-      std::cout << "Chosing from nodes...\n";
-      for (auto node : openSetFScore)
+      Node current = nodesToVisit.top();
+
+      if (current == target)
       {
-         std::cout << "F-score of Node " << node.first << ": " << node.second << "\n";
+         return theMap.reconstructPath(current, visitedNodes, pOutBuffer, nOutBufferSize);
       }
 
-      auto current = min_element(std::begin(openSetFScore), std::end(openSetFScore), [](auto i, auto j){return i.second < j.second;})->first;
-      std::cout << "Current node is " << current << "\n";      
-
-      if (current == goalIndex)
-      {
-         std::cout << "Current node is the target!\n";
-         return reconstructPath(cameFrom, current);
-      }
-
-      openSet.erase(std::find(std::begin(openSet), std::end(openSet), current));
-      closedSet.push_back(current);
-
-      auto neighbours = getNeighbours(current, pMap, nMapWidth, nMapHeight);
+      nodesToVisit.pop();
+      visitedNodes.push_back(current);
       
+      auto neighbours = theMap.getNeighbours(current);
       for(auto neighbour : neighbours)
       {
-         std::cout << " Investigating neighbour " << neighbour << "\n";
-         if (std::find(std::begin(closedSet), std::end(closedSet), neighbour) != std::end(closedSet))
+         // Have we already visited this node?
+         if(std::find(visitedNodes.begin(), visitedNodes.end(), neighbour) != visitedNodes.end())
          {
-            std::cout << " Node " << neighbour << " has already been investigated.\n";
+            continue;
+         }
+      
+         const auto newDistance = current.getDistanceFromStart() + 1; // Cost between all nodes is 1
+         // Have we found a better way to get to this node?
+         if (newDistance > neighbour.getDistanceFromStart())
+         {
             continue;
          }
 
-         if (std::find(std::begin(openSet), std::end(openSet), neighbour) == std::end(openSet))
-         {
-            std::cout << " Node " << neighbour << " added to open set\n";
-            openSet.push_back(neighbour);
-         }
+         neighbour.updateDistanceFromStart(newDistance);
+         neighbour.updatePriority(newDistance + theMap.heuristicCostEstimate(neighbour, target));
+         neighbour.setPreviousNodeXY(current);
          
-         const auto tentativeScore = gScore[current] + 1;
-         if(tentativeScore > gScore[neighbour])
-         {
-            std::cout << " This is not a better path...\n";
-            continue;
-         }
-         
-         std::cout << " This path might be something!\n";
-         cameFrom.emplace(neighbour, current);
-         gScore[neighbour] = tentativeScore;
-         fScore[neighbour] = gScore[neighbour] + HeuristicCostEstimate(neighbour, goalIndex, nMapWidth);
+         nodesToVisit.push(neighbour);
 
-         std::cout << " G-Score of node " << neighbour << " is " << gScore[neighbour] << "\n";
-         std::cout << " F-Score of node " << neighbour << " is " << fScore[neighbour] << "\n";
-
-         for (auto aGScore : gScore)
-         {
-            std::cout << " G-Score node " << aGScore.first << ": " << aGScore.second << "\n";
-         }
-
-         for (auto anFScore : fScore)
-         {
-         
-            std::cout << " F-Score node " << anFScore.first << ": " << anFScore.second << "\n";
-         }
       }
-      std::cout << "No more neigbours to investigate\n";
+
    }
+
 
    return -1;
 }
@@ -196,5 +239,24 @@ int main()
 {
    unsigned char pMap[] = {1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1};
    int pOutBuffer[12];
-   std::cout << FindPath(0, 0, 1, 2, pMap, 4, 3, pOutBuffer, 12) << std::endl;
+   int res = FindPath(0, 0, 1, 2, pMap, 4, 3, pOutBuffer, 12);
+
+   std::cout << res << "\n";
+   for(int i = 0; i < res; ++i)
+   {
+      std::cout << pOutBuffer[i] << " ";
+   }
+   std::cout << "\n\n";
+    
+   unsigned char pMap2[] = {0, 0, 1, 0, 1, 1, 1, 0, 1};
+   int pOutBuffer2[7];
+   int res2 = FindPath(2, 0, 0, 2, pMap2, 3, 3, pOutBuffer2, 7);
+      
+   std::cout << res2 << "\n";
+   for(int i = 0; i < res2; ++i)
+   {
+      std::cout << pOutBuffer2[i] << " ";
+   }
+   std::cout << "\n"; 
 }
+
